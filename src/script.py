@@ -1,5 +1,6 @@
 import pyshark
 from collections import Counter
+import argparse
 
 
 THRESHOLD = 10
@@ -22,11 +23,20 @@ def analyzer_packet(pkt):
             print(f"[{protocol}] Source IP:{src_ip} and port:{src_port} ---> Destination IP:{dst_ip} and port:{dst_port}")
     except AttributeError:
         pass
+    
+def main():
+    parser = argparse.ArgumentParser(description="PCAPNG file processor")
+    parser.add_argument("Archive", help="path for archive .pcapng")
+    args = parser.parse_args()
+    
+    print(f"Processing archive: {args.Archive}")
 
+    capture = pyshark.FileCapture(args.Archive)
+    capture.apply_on_packets(analyzer_packet, timeout=120)
 
-capture = pyshark.FileCapture('samplescapture.pcapng')
-capture.apply_on_packets(analyzer_packet, timeout=120)
-
-for (src_ip, dst_port), count in connection_count.items():
-    if int(dst_port) < 1024 and count > THRESHOLD and int(dst_port) not in WHITELIST_PORTS:
-        print(f"[ALERT] IP {src_ip} sent {count} packets to port {dst_port}")
+    for (src_ip, dst_port), count in connection_count.items():
+        if int(dst_port) < 1024 and count > THRESHOLD and int(dst_port) not in WHITELIST_PORTS:
+            print(f"[ALERT] IP {src_ip} sent {count} packets to port {dst_port}")
+            
+if __name__ == "__main__":
+    main()
